@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>NOBLE חשבונות</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d1117; --surface:#161b22; --surface2:#1c2330; --surface3:#21262d;
+  --border:#30363d; --text:#e6edf3; --text-muted:#7d8590; --text-dim:#484f58;
+  --accent:#388bfd; --accent-soft:#1f3a5f;
+  --green:#3fb950; --green-soft:#1a3a24;
+  --red:#f85149; --red-soft:#3d1f1f;
+  --yellow:#e3b341; --yellow-soft:#3d2f0f;
+  --purple:#bc8cff; --purple-soft:#2d1f4a;
+  --teal:#39d9c5; --teal-soft:#0d2e2b;
+  --orange:#ff9f43;
+  --radius:14px; --radius-sm:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);direction:rtl;min-height:100vh;overflow-x:hidden}
+
+/* ── LOADER ── */
+#loader{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s}
+#loader.hidden{opacity:0;pointer-events:none}
+.loader-logo{font-size:52px;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.loader-text{font-size:14px;color:var(--text-muted);font-weight:500}
+.loader-bar{width:180px;height:3px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.loader-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:2px;transition:width .4s ease}
+
+/* ── HEADER ── */
+.header{
+  background:linear-gradient(135deg,#0d1117,#161b22,#1a2332);
+  border-bottom:1px solid var(--border);
+  padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-logo{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),#7c3aed);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.header-title{font-size:17px;font-weight:800;letter-spacing:-.5px}
+.header-sub{font-size:10px;color:var(--text-muted)}
+.header-actions{display:flex;align-items:center;gap:8px}
+.badge-live{display:flex;align-items:center;gap:5px;background:var(--green-soft);border:1px solid var(--green);color:var(--green);padding:4px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.btn-refresh{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);padding:6px 12px;border-radius:var(--radius-sm);font-family:'Heebo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-refresh:active{background:var(--accent);color:#fff}
+.badge-updated{font-size:10px;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);padding:3px 8px;border-radius:20px}
+
+/* ── MAIN ── */
+.main{padding:14px 14px 100px;max-width:500px;margin:0 auto}
+
+/* ── ERROR ── */
+.error-banner{background:var(--red-soft);border:1px solid var(--red);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--red);display:none;line-height:1.5}
+
+/* ── KPI SCROLL ROW ── */
+.kpi-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;scrollbar-width:none}
+.kpi-scroll::-webkit-scrollbar{display:none}
+.kpi-card{
+  flex:0 0 140px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 14px 12px;position:relative;overflow:hidden;
+  cursor:pointer;transition:transform .15s,border-color .15s;
+  text-decoration:none;color:inherit;
+}
+.kpi-card:active{transform:scale(.97)}
+.kpi-card::before{content:'';position:absolute;top:0;right:0;width:50px;height:50px;border-radius:0 var(--radius) 0 50px;opacity:.12}
+.kpi-card.blue::before{background:var(--accent)}.kpi-card.green::before{background:var(--green)}
+.kpi-card.red::before{background:var(--red)}.kpi-card.yellow::before{background:var(--yellow)}
+.kpi-card.purple::before{background:var(--purple)}
+.kpi-icon{font-size:18px;margin-bottom:8px}
+.kpi-label{font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.kpi-value{font-size:20px;font-weight:800;letter-spacing:-1px;line-height:1}
+.kpi-value.blue{color:var(--accent)}.kpi-value.green{color:var(--green)}.kpi-value.red{color:var(--red)}
+.kpi-value.yellow{color:var(--yellow)}.kpi-value.purple{color:var(--purple)}
+.kpi-sub{font-size:9px;color:var(--text-muted);margin-top:3px}
+.kpi-arrow{position:absolute;bottom:10px;left:12px;font-size:12px;color:var(--text-dim)}
+
+/* ── SECTION (accordion) ── */
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:15px 16px;cursor:pointer;user-select:none;
+  transition:background .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.section-header:active{background:var(--surface2)}
+.section-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.section-meta{display:flex;align-items:center;gap:8px}
+.section-badge{background:var(--surface3);border:1px solid var(--border);border-radius:20px;padding:2px 9px;font-size:11px;color:var(--text-muted)}
+.section-chevron{font-size:13px;color:var(--text-muted);transition:transform .25s;display:inline-block}
+.section.open .section-chevron{transform:rotate(180deg)}
+.section-body{display:none;border-top:1px solid var(--border)}
+.section.open .section-body{display:block}
+
+/* ── FILTERS ── */
+.filters-body{padding:14px}
+.filter-row{display:flex;flex-direction:column;gap:8px}
+.filter-item{display:flex;flex-direction:column;gap:4px}
+.filter-item label{font-size:11px;font-weight:600;color:var(--text-muted)}
+select,input[type="text"],input[type="date"]{
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);font-family:'Heebo',sans-serif;font-size:14px;padding:9px 12px;
+  outline:none;width:100%;direction:rtl;
+  -webkit-appearance:none;appearance:none;
+}
+select:focus,input:focus{border-color:var(--accent)}
+.filter-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.active-tags{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 12px}
+.active-tag{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:20px;padding:3px 9px;font-size:11px;color:var(--accent);font-weight:600}
+.active-tag .x{cursor:pointer;opacity:.7;font-size:13px}
+.btn-reset-full{margin:0 14px 14px;width:calc(100% - 28px);background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'Heebo',sans-serif;font-size:13px;font-weight:600;padding:10px;cursor:pointer}
+
+/* ── EXPENSE CARDS ── */
+.expense-list{padding:10px 12px}
+.expense-card{
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:12px 14px;margin-bottom:8px;
+}
+.expense-card:last-child{margin-bottom:0}
+.exp-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.exp-biz{font-size:14px;font-weight:700;flex:1;margin-left:10px}
+.exp-amount{font-size:16px;font-weight:800;color:var(--red);white-space:nowrap}
+.exp-mid{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px}
+.exp-detail{font-size:12px;color:var(--text-muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-bot{display:flex;align-items:center;justify-content:space-between}
+.exp-date{font-size:11px;color:var(--text-dim)}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-cash{background:var(--yellow-soft);color:var(--yellow)}
+.badge-card{background:var(--purple-soft);color:var(--purple)}
+.badge-unknown{background:var(--surface3);color:var(--text-muted)}
+.badge-source-reg{background:var(--teal-soft);color:var(--teal)}
+.badge-source-kup{background:#3d2510;color:var(--orange)}
+.badge-receipt{background:var(--green-soft);color:var(--green);font-size:10px}
+
+.list-footer{padding:12px 14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface2);font-size:12px;color:var(--text-muted)}
+.list-footer-total{font-weight:800;color:var(--red);font-size:15px}
+.no-results{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px}
+
+/* ── CASH SECTION ── */
+.cash-body{padding:14px}
+.cash-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px}
+.cash-row:last-child{border-bottom:none}
+.cash-label{color:var(--text-muted)}
+.cash-val{font-weight:700}.cash-val.pos{color:var(--green)}.cash-val.neg{color:var(--red)}
+.income-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.income-item:last-child{border-bottom:none}
+.income-from{font-size:13px;font-weight:600}
+.income-date{font-size:11px;color:var(--text-muted)}
+.income-amount{font-size:14px;font-weight:700;color:var(--green)}
+
+/* ── MONTH CHART ── */
+.chart-body{padding:16px 14px 10px}
+.month-chart{display:flex;align-items:flex-end;gap:10px;height:90px}
+.month-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.month-bar{width:100%;border-radius:5px 5px 0 0;min-height:4px;cursor:pointer;transition:opacity .2s}
+.month-bar:active{opacity:.7}
+.month-bar-label{font-size:10px;color:var(--text-muted);text-align:center}
+.month-bar-val{font-size:9px;color:var(--text-muted);text-align:center}
+
+/* ── CAT BARS ── */
+.cat-body{padding:14px}
+.cat-item{margin-bottom:13px;cursor:pointer}
+.cat-item:last-child{margin-bottom:0}
+.cat-item:active .cat-bar-bg{opacity:.7}
+.cat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.cat-name{font-size:13px;font-weight:600}
+.cat-amount{font-size:13px;font-weight:700;color:var(--text-muted)}
+.cat-bar-bg{background:var(--surface3);border-radius:5px;height:6px;overflow:hidden}
+.cat-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{
+  position:fixed;bottom:0;right:0;left:0;
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;z-index:99;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;cursor:pointer;transition:color .2s;color:var(--text-muted);font-size:10px;font-weight:600;gap:3px;background:none;border:none;font-family:'Heebo',sans-serif}
+.nav-btn.active{color:var(--accent)}
+.nav-icon{font-size:20px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.expense-card{animation:fadeIn .2s ease both}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-logo">💼</div>
+  <div class="loader-text">טוען נתונים...</div>
+  <div class="loader-bar"><div class="loader-bar-fill" id="loader-fill"></div></div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <div class="header-logo">💼</div>
+    <div>
+      <div class="header-title">NOBLE חשבונות</div>
+      <div class="header-sub" id="last-updated">מתעדכן...</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div class="badge-live"><div class="badge-live-dot"></div>Live</div>
+    <button class="btn-refresh" id="btn-refresh" onclick="loadData()">↺</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="error-banner" id="error-banner"></div>
+
+  <!-- KPI ROW -->
+  <div class="kpi-scroll" id="kpi-scroll">
+    <div class="kpi-card red" onclick="scrollToSection('sec-expenses')">
+      <div class="kpi-icon">📤</div>
+      <div class="kpi-label">סה"כ הוצאות</div>
+      <div class="kpi-value red" id="kpi-total">—</div>
+      <div class="kpi-sub" id="kpi-total-sub"> </div>
+      <div class="kpi-arrow">←</div>
+    </div>
+    <div class="kpi-card purple" onclick="setSourceFilter('הוצאות');scrollToSection('sec-expenses')">
+      <div class="kpi-icon">💳</div>
+      <div class="kpi-label">אשראי</div>
+      <div class="kpi-value purple" id="kpi-card">—</div>
+      <div class="kpi-sub">כרטיסי אשראי</div>
+      <div class="kpi-arrow">←</div>
+    </div>
+    <div class="kpi-card yellow" onclick="setSourceFilter('קופה קטנה');scrollToSection('sec-expenses')">
+      <div class="kpi-icon">💵</div>
+      <div class="kpi-label">קופה קטנה</div>
+      <div class="kpi-value yellow" id="kpi-cash">—</div>
+      <div class="kpi-sub">הוצאות</div>
+      <div class="kpi-arrow">←</div>
+    </div>
+    <div class="kpi-card green" onclick="scrollToSection('sec-cash')">
+      <div class="kpi-icon">📥</div>
+      <div class="kpi-label">הכנסות</div>
+      <div class="kpi-value green" id="kpi-income">—</div>
+      <div class="kpi-sub">קופה קטנה</div>
+      <div class="kpi-arrow">←</div>
+    </div>
+    <div class="kpi-card blue" onclick="scrollToSection('sec-cash')">
+      <div class="kpi-icon">🏦</div>
+      <div class="kpi-label">יתרת קופה</div>
+      <div class="kpi-value blue" id="kpi-balance">—</div>
+      <div class="kpi-sub">נכון להיום</div>
+      <div class="kpi-arrow">←</div>
+    </div>
+  </div>
+
+  <!-- FILTERS SECTION -->
+  <div class="section open" id="sec-filters">
+    <div class="section-header" onclick="toggleSection('sec-filters')">
+      <div class="section-title">🔍 סינון</div>
+      <div class="section-meta">
+        <div class="section-badge" id="filter-count-badge">ללא סינון</div>
+        <span class="section-chevron">▼</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="filters-body">
+        <div class="filter-row">
+          <div class="filter-item">
+            <label>חיפוש חופשי</label>
+            <input type="text" id="filter-search" placeholder="שם עסק, פירוט, קטגוריה...">
+          </div>
+          <div class="filter-item">
+            <label>חודש</label>
+            <select id="filter-month"><option value="">כל החודשים</option></select>
+          </div>
+          <div class="filter-item">
+            <label>קטגוריה</label>
+            <select id="filter-cat"><option value="">כל הקטגוריות</option></select>
+          </div>
+          <div class="filter-item">
+            <label>אמצעי תשלום</label>
+            <select id="filter-payment"><option value="">כל אמצעי תשלום</option></select>
+          </div>
+          <div class="filter-item">
+            <label>מקור</label>
+            <select id="filter-source">
+              <option value="">כל המקורות</option>
+              <option value="הוצאות">הוצאות רגילות</option>
+              <option value="קופה קטנה">קופה קטנה</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>טווח תאריכים</label>
+            <div class="filter-dates">
+              <input type="date" id="filter-from" placeholder="מתאריך">
+              <input type="date" id="filter-to" placeholder="עד תאריך">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="active-tags" id="active-tags"></div>
+      <button class="btn-reset-full" onclick="resetFilters()">↺ איפוס כל הסינונים</button>
+    </div>
+  </div>
+
+  <!-- EXPENSES SECTION -->
+  <div class="section open" id="sec-expenses">
+    <div class="section-header" onclick="toggleSection('sec-expenses')">
+      <div class="section-title">📋 רשימת הוצאות</div>
+      <div class="section-meta">
+        <div class="section-badge" id="row-count">—</div>
+        <span class="section-chevron">▼</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="expense-list" id="expense-list"></div>
+      <div class="no-results" id="no-results" style="display:none">🔍 לא נמצאו רשומות</div>
+      <div class="list-footer">
+        <span>סה"כ מסוּנן:</span>
+        <span class="list-footer-total" id="filtered-total">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MONTHS SECTION -->
+  <div class="section" id="sec-months">
+    <div class="section-header" onclick="toggleSection('sec-months')">
+      <div class="section-title">📅 הוצאות לפי חודש</div>
+      <div class="section-meta">
+        <span class="section-chevron">▼</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="chart-body">
+        <div class="month-chart" id="month-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORIES SECTION -->
+  <div class="section" id="sec-cats">
+    <div class="section-header" onclick="toggleSection('sec-cats')">
+      <div class="section-title">🏷️ הוצאות לפי קטגוריה</div>
+      <div class="section-meta">
+        <span class="section-chevron">▼</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="cat-body" id="cat-bars"></div>
+    </div>
+  </div>
+
+  <!-- CASH SECTION -->
+  <div class="section" id="sec-cash">
+    <div class="section-header" onclick="toggleSection('sec-cash')">
+      <div class="section-title">💵 קופה קטנה</div>
+      <div class="section-meta">
+        <div class="section-badge" id="cash-balance-badge">—</div>
+        <span class="section-chevron">▼</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="cash-body" id="cash-summary"></div>
+      <div style="padding:0 14px 4px;font-size:12px;font-weight:700;color:var(--text-muted);border-top:1px solid var(--border);padding-top:12px">הכנסות קופה</div>
+      <div class="cash-body" id="income-list" style="padding-top:6px"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SHEET_ID = '1P3-ua1F4MB0Vy1WnaKpYDJUI9_of-Kmy6-pg3yFY-KY';
+let ALL_EXPENSES = [], ALL_INCOME = [];
+
+// ── Toggle section open/close
+function toggleSection(id) {
+  const sec = document.getElementById(id);
+  sec.classList.toggle('open');
+}
+function scrollToSection(id) {
+  const sec = document.getElementById(id);
+  if (!sec.classList.contains('open')) sec.classList.add('open');
+  setTimeout(() => sec.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+}
+
+// ── Fetch Google Sheet via gviz API
+function fetchSheet(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  return fetch(url).then(r => r.text()).then(text => {
+    const json = text.replace(/^[^{]*/, '').replace(/[^}]*$/, '');
+    const parsed = JSON.parse(json);
+    const cols = parsed.table.cols.map(c => c.label);
+    return (parsed.table.rows || []).map(row => {
+      const obj = {};
+      row.c.forEach((cell, i) => { obj[cols[i]] = cell ? cell.v : null; });
+      return obj;
+    });
+  });
+}
+
+// ── Date helpers
+function excelDate(val) {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val) ? null : val;
+  if (typeof val === 'string' && val.startsWith('Date(')) {
+    const p = val.replace('Date(','').replace(')','').split(',').map(Number);
+    return new Date(p[0], p[1], p[2]);
+  }
+  if (typeof val === 'number') return new Date((val - 25569) * 86400 * 1000);
+  if (typeof val === 'string') {
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(val)) {
+      const [dd,mm,yyyy] = val.split('/'); return new Date(+yyyy,+mm-1,+dd);
+    }
+    const d = new Date(val); return isNaN(d) ? null : d;
+  }
+  return null;
+}
+function fmtDate(d) { return d ? d.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric'}) : ''; }
+function sortDate(d) { return d ? d.toISOString().slice(0,10) : ''; }
+function monthOf(d)  { return d ? d.toISOString().slice(0,7) : ''; }
+
+const MONTH_HE = {'01':'ינואר','02':'פברואר','03':'מרץ','04':'אפריל','05':'מאי','06':'יוני','07':'יולי','08':'אוגוסט','09':'ספטמבר','10':'אוקטובר','11':'נובמבר','12':'דצמבר'};
+const MONTH_SH = {'01':'ינו','02':'פבר','03':'מרץ','04':'אפר','05':'מאי','06':'יוני','07':'יולי','08':'אוג','09':'ספט','10':'אוק','11':'נוב','12':'דצמ'};
+function monthLabel(m) { const [y,mo]=m.split('-'); return (MONTH_HE[mo]||mo)+' '+y; }
+function monthShort(m) { const [y,mo]=m.split('-'); return (MONTH_SH[mo]||mo)+"'"+(y.slice(2)); }
+
+const CAT_COLORS = {
+  'חלפים':'#388bfd','הובלה':'#e3b341','עבודה':'#3fb950','חשמל':'#ff9f43',
+  'תיקונים':'#bc8cff','מזגנים':'#39d9c5','ציוד':'#f85149','ציוד משרדי':'#79c0ff',
+  'טמבור':'#ffa657','רפואה':'#ff7b72','שונות':'#7d8590','בטיחות':'#ff6b6b',
+  'חלקי חילוף':'#54a0ff','לא מוגדר':'#484f58'
+};
+function catColor(c) { return CAT_COLORS[c] || '#7d8590'; }
+function fmt(n) { return '₪'+(+n).toLocaleString('he-IL',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function progress(p) { document.getElementById('loader-fill').style.width = p+'%'; }
+
+// ── Load all data
+async function loadData() {
+  const btn = document.getElementById('btn-refresh');
+  btn.style.animation = 'spin .8s linear infinite';
+  btn.style.display = 'inline-block';
+  progress(5); showError('');
+  try {
+    progress(15);
+    const [rowsH, rowsK, rowsI, rowsBiz] = await Promise.all([
+      fetchSheet('הוצאות'), fetchSheet('קופה הוצאות'),
+      fetchSheet('הכנסות קופה'), fetchSheet('בתי עסק'),
+    ]);
+    progress(70);
+    const catMap = {};
+    rowsBiz.forEach(r => { if (r['שם עסק']) catMap[r['שם עסק'].trim()] = r['קטגוריה'] || 'לא מוגדר'; });
+
+    const makeExp = (r, isKupa) => {
+      const d = excelDate(r['תאריך']);
+      const biz = (r['בית העסק'] || '').trim();
+      return {
+        תאריך: fmtDate(d), 'תאריך_sort': sortDate(d), חודש: monthOf(d),
+        סכום: parseFloat(r['סכום']) || 0, עסק: biz,
+        פירוט: r['פירוט'] || '',
+        קטגוריה: catMap[biz] || 'לא מוגדר',
+        'אמצעי תשלום': isKupa ? 'קופה קטנה' : (r['אמצעי תשלום'] || ''),
+        מקור: isKupa ? 'קופה קטנה' : 'הוצאות',
+        קבלה: isKupa ? (r['קבלה/הערות'] || '') : (r['הועבר קבלה'] || ''),
+      };
+    };
+    ALL_EXPENSES = [
+      ...rowsH.filter(r=>r['סכום']!=null&&r['תאריך']!=null).map(r=>makeExp(r,false)),
+      ...rowsK.filter(r=>r['סכום']!=null&&r['תאריך']!=null).map(r=>makeExp(r,true)),
+    ].filter(e=>e['תאריך_sort']);
+
+    ALL_INCOME = rowsI.filter(r=>r['סכום']!=null).map(r => {
+      const d = excelDate(r['תאריך']);
+      return { תאריך: fmtDate(d), סכום: parseFloat(r['סכום'])||0, מאת: r['התקבל מ:']||r['מאת']||'' };
+    });
+
+    progress(90);
+    populateFilters();
+    renderAll();
+    buildMonthChart();
+    buildCashSummary();
+    buildIncomeList();
+    const now = new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('last-updated').textContent = `עודכן ${now}`;
+    progress(100);
+    setTimeout(()=>document.getElementById('loader').classList.add('hidden'), 350);
+  } catch(e) {
+    showError('שגיאה בטעינת הנתונים: '+e.message+' — ודא שה-Sheet פתוח לציבור');
+    document.getElementById('loader').classList.add('hidden');
+  }
+  btn.style.animation = '';
+}
+
+function showError(m) {
+  const el = document.getElementById('error-banner');
+  el.textContent = m; el.style.display = m ? 'block' : 'none';
+}
+
+// ── Populate dropdowns
+function populateFilters() {
+  const months = [...new Set(ALL_EXPENSES.map(e=>e['חודש']))].filter(Boolean).sort();
+  const cats   = [...new Set(ALL_EXPENSES.map(e=>e['קטגוריה']))].filter(Boolean).sort();
+  const pays   = [...new Set(ALL_EXPENSES.map(e=>e['אמצעי תשלום']))].filter(Boolean).sort();
+  function fill(id, vals, labelFn) {
+    const el = document.getElementById(id), cur = el.value;
+    while (el.options.length > 1) el.remove(1);
+    vals.forEach(v => { const o = document.createElement('option'); o.value=v; o.textContent=labelFn?labelFn(v):v; el.appendChild(o); });
+    el.value = cur;
+  }
+  fill('filter-month', months, monthLabel);
+  fill('filter-cat', cats);
+  fill('filter-payment', pays);
+}
+
+// ── Filter helpers
+function getFilters() {
+  return {
+    search:  document.getElementById('filter-search').value.trim().toLowerCase(),
+    month:   document.getElementById('filter-month').value,
+    cat:     document.getElementById('filter-cat').value,
+    payment: document.getElementById('filter-payment').value,
+    source:  document.getElementById('filter-source').value,
+    from:    document.getElementById('filter-from').value,
+    to:      document.getElementById('filter-to').value,
+  };
+}
+function filterData() {
+  const f = getFilters();
+  return ALL_EXPENSES.filter(e => {
+    if (f.search && ![e['עסק'],e['פירוט'],e['קטגוריה'],e['אמצעי תשלום'],String(e['סכום'])].some(v=>(v||'').toLowerCase().includes(f.search))) return false;
+    if (f.month   && e['חודש']!==f.month)             return false;
+    if (f.cat     && e['קטגוריה']!==f.cat)            return false;
+    if (f.payment && e['אמצעי תשלום']!==f.payment)   return false;
+    if (f.source  && e['מקור']!==f.source)            return false;
+    if (f.from    && e['תאריך_sort']<f.from)          return false;
+    if (f.to      && e['תאריך_sort']>f.to)            return false;
+    return true;
+  }).sort((a,b)=>b['תאריך_sort'].localeCompare(a['תאריך_sort']));
+}
+
+function setSourceFilter(val) {
+  document.getElementById('filter-source').value = val;
+  renderAll();
+}
+
+// ── Render expense cards
+function renderAll() {
+  const data = filterData();
+  const list = document.getElementById('expense-list');
+  const noRes = document.getElementById('no-results');
+  list.innerHTML = '';
+  noRes.style.display = data.length ? 'none' : 'block';
+
+  data.forEach((e,i) => {
+    const isCard = /אשראי|כרטיס/i.test(e['אמצעי תשלום']);
+    const isCash = /מזומן|קופה/i.test(e['אמצעי תשלום']);
+    const payBadge = isCard
+      ? `<span class="badge badge-card">${e['אמצעי תשלום']}</span>`
+      : isCash ? `<span class="badge badge-cash">${e['אמצעי תשלום']}</span>`
+      : `<span class="badge badge-unknown">${e['אמצעי תשלום']||'—'}</span>`;
+    const srcBadge = e['מקור']==='קופה קטנה'
+      ? `<span class="badge badge-source-kup">קופה</span>`
+      : `<span class="badge badge-source-reg">הוצאות</span>`;
+    const color = catColor(e['קטגוריה']);
+    const catBadge = `<span class="badge" style="background:${color}22;color:${color}">${e['קטגוריה']}</span>`;
+    const recBadge = e['קבלה'] ? `<span class="badge badge-receipt">✓ ${e['קבלה']}</span>` : '';
+    const card = document.createElement('div');
+    card.className = 'expense-card';
+    card.style.animationDelay = Math.min(i*0.03, 0.3)+'s';
+    card.innerHTML = `
+      <div class="exp-top">
+        <div class="exp-biz">${e['עסק']||'—'}</div>
+        <div class="exp-amount">${fmt(e['סכום'])}</div>
+      </div>
+      <div class="exp-mid">
+        ${catBadge} ${payBadge} ${srcBadge}
+        ${recBadge}
+      </div>
+      ${e['פירוט'] ? `<div class="exp-detail">${e['פירוט']}</div>` : ''}
+      <div class="exp-bot" style="margin-top:5px">
+        <div class="exp-date">${e['תאריך']}</div>
+      </div>`;
+    list.appendChild(card);
+  });
+
+  const total = data.reduce((s,e)=>s+e['סכום'],0);
+  const f = getFilters();
+  const activeCount = [f.search,f.month,f.cat,f.payment,f.source,f.from,f.to].filter(Boolean).length;
+  document.getElementById('row-count').textContent = data.length + ' רשומות';
+  document.getElementById('filtered-total').textContent = fmt(total);
+  document.getElementById('filter-count-badge').textContent = activeCount ? activeCount+' סינונים פעילים' : 'ללא סינון';
+
+  updateKPIs(data);
+  buildCatBars(data.length ? data : ALL_EXPENSES);
+  updateActiveTags();
+}
+
+// ── KPIs
+function updateKPIs(data) {
+  const total    = data.reduce((s,e)=>s+e['סכום'],0);
+  const cardExp  = data.filter(e=>e['מקור']==='הוצאות').reduce((s,e)=>s+e['סכום'],0);
+  const cashExp  = data.filter(e=>e['מקור']==='קופה קטנה').reduce((s,e)=>s+e['סכום'],0);
+  const income   = ALL_INCOME.reduce((s,e)=>s+e['סכום'],0);
+  const allCash  = ALL_EXPENSES.filter(e=>e['מקור']==='קופה קטנה').reduce((s,e)=>s+e['סכום'],0);
+  const balance  = income - allCash;
+  document.getElementById('kpi-total').textContent   = fmt(total);
+  document.getElementById('kpi-card').textContent    = fmt(cardExp);
+  document.getElementById('kpi-cash').textContent    = fmt(cashExp);
+  document.getElementById('kpi-income').textContent  = fmt(income);
+  document.getElementById('kpi-balance').textContent = fmt(balance);
+  document.getElementById('kpi-total-sub').textContent = data.length+' פעולות';
+}
+
+// ── Cash
+function buildCashSummary() {
+  const income  = ALL_INCOME.reduce((s,e)=>s+e['סכום'],0);
+  const cashExp = ALL_EXPENSES.filter(e=>e['מקור']==='קופה קטנה').reduce((s,e)=>s+e['סכום'],0);
+  const balance = income - cashExp;
+  document.getElementById('cash-balance-badge').textContent = fmt(balance);
+  document.getElementById('cash-summary').innerHTML = `
+    <div class="cash-row"><span class="cash-label">סה"כ הכנסות</span><span class="cash-val pos">${fmt(income)}</span></div>
+    <div class="cash-row"><span class="cash-label">סה"כ הוצאות</span><span class="cash-val neg">${fmt(cashExp)}</span></div>
+    <div class="cash-row" style="border-top:2px solid var(--border);padding-top:10px;margin-top:4px">
+      <span style="font-weight:700">יתרה</span>
+      <span class="cash-val ${balance>=0?'pos':'neg'}" style="font-size:18px">${fmt(balance)}</span>
+    </div>`;
+}
+function buildIncomeList() {
+  const el = document.getElementById('income-list');
+  if (!ALL_INCOME.length) { el.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:8px 0">אין נתונים</div>'; return; }
+  el.innerHTML = ALL_INCOME.map(i=>`
+    <div class="income-item">
+      <div><div class="income-from">${i['מאת']||'—'}</div><div class="income-date">${i['תאריך']}</div></div>
+      <div class="income-amount">${fmt(i['סכום'])}</div>
+    </div>`).join('');
+}
+
+// ── Month chart
+function buildMonthChart() {
+  const months = {};
+  ALL_EXPENSES.forEach(e => { if(e['חודש']) months[e['חודש']] = (months[e['חודש']]||0)+e['סכום']; });
+  const sorted = Object.entries(months).sort((a,b)=>a[0].localeCompare(b[0]));
+  const max = Math.max(...sorted.map(([,v])=>v), 1);
+  const colors = ['#388bfd','#3fb950','#e3b341','#bc8cff','#39d9c5','#ff9f43'];
+  const c = document.getElementById('month-chart');
+  c.innerHTML = '';
+  sorted.forEach(([m,v],i) => {
+    const h = Math.max((v/max)*78, 4);
+    const w = document.createElement('div');
+    w.className = 'month-bar-wrap';
+    w.innerHTML = `
+      <div class="month-bar-val">${fmt(v)}</div>
+      <div class="month-bar" style="height:${h}px;background:${colors[i%colors.length]}" onclick="setMonthFilter('${m}')"></div>
+      <div class="month-bar-label">${monthShort(m)}</div>`;
+    c.appendChild(w);
+  });
+}
+function setMonthFilter(m) {
+  document.getElementById('filter-month').value = m;
+  renderAll();
+  scrollToSection('sec-expenses');
+}
+
+// ── Category bars
+function buildCatBars(data) {
+  const cats = {};
+  data.forEach(e => { cats[e['קטגוריה']] = (cats[e['קטגוריה']]||0)+e['סכום']; });
+  const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,9);
+  const max = sorted[0]?.[1]||1;
+  document.getElementById('cat-bars').innerHTML = sorted.map(([cat,val]) => {
+    const pct = (val/max)*100, color = catColor(cat);
+    return `<div class="cat-item" onclick="setCatFilter('${cat}')">
+      <div class="cat-row">
+        <div class="cat-name" style="color:${color}">${cat}</div>
+        <div class="cat-amount">${fmt(val)}</div>
+      </div>
+      <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+}
+function setCatFilter(cat) {
+  document.getElementById('filter-cat').value = cat;
+  renderAll();
+  scrollToSection('sec-expenses');
+}
+
+// ── Active filter tags
+function updateActiveTags() {
+  const f = getFilters();
+  const c = document.getElementById('active-tags');
+  c.innerHTML = '';
+  const tags = [];
+  if(f.month)   tags.push([monthLabel(f.month), ()=>{document.getElementById('filter-month').value='';renderAll();}]);
+  if(f.cat)     tags.push([f.cat,               ()=>{document.getElementById('filter-cat').value='';renderAll();}]);
+  if(f.payment) tags.push([f.payment,            ()=>{document.getElementById('filter-payment').value='';renderAll();}]);
+  if(f.source)  tags.push([f.source,             ()=>{document.getElementById('filter-source').value='';renderAll();}]);
+  if(f.search)  tags.push([`"${f.search}"`,      ()=>{document.getElementById('filter-search').value='';renderAll();}]);
+  if(f.from)    tags.push([`מ-${f.from}`,        ()=>{document.getElementById('filter-from').value='';renderAll();}]);
+  if(f.to)      tags.push([`עד-${f.to}`,         ()=>{document.getElementById('filter-to').value='';renderAll();}]);
+  tags.forEach(([label,fn]) => {
+    const d = document.createElement('div');
+    d.className = 'active-tag';
+    d.innerHTML = label+' <span class="x">✕</span>';
+    d.querySelector('.x').addEventListener('click', fn);
+    c.appendChild(d);
+  });
+}
+
+function resetFilters() {
+  ['filter-month','filter-cat','filter-payment','filter-source'].forEach(id=>document.getElementById(id).value='');
+  ['filter-search','filter-from','filter-to'].forEach(id=>document.getElementById(id).value='');
+  renderAll();
+}
+
+// ── Wire filters
+['filter-search','filter-month','filter-cat','filter-payment','filter-source','filter-from','filter-to']
+  .forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', renderAll);
+    el.addEventListener('change', renderAll);
+  });
+
+// ── Auto-refresh every 5 min
+setInterval(loadData, 5*60*1000);
+loadData();
+</script>
+</body>
+</html>
